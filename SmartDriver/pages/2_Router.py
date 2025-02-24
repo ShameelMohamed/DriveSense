@@ -27,7 +27,7 @@ ORS_API_KEY = "5b3ce3597851110001cf6248e6cfd54b45cc4191bcde2aa3dc9e4a67"
 
 # Initialize Firebase
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_credentials.json")  # Replace with your Firebase credentials JSON file
+    cred = credentials.Certificate(dict(st.secrets["firebase"]))  # Replace with your Firebase credentials JSON file
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
