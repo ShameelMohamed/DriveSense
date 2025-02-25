@@ -13,6 +13,5 @@ scipy==1.12.0
 pygame==2.5.2
 assemblyai==0.20.0
 google-generativeai==0.4.0
-pyaudio==0.2.14
 wave==0.0.2
 dlib==19.24.2
