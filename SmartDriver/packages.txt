@@ -5,3 +5,5 @@ portaudio19-dev
 libasound2-dev
 libjack-dev
 libpulse-dev
+libportaudio2
+libportaudiocpp0
