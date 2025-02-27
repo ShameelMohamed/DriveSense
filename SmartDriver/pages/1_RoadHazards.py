@@ -33,7 +33,7 @@ st.markdown(background_css, unsafe_allow_html=True)
 
 # Firebase Setup
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_credentials.json")
+    cred = credentials.Certificate(dict(st.secrets["firebase"]))
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
