@@ -1,2 +1,4 @@
-cmake
-portaudio.h
+portaudio19-dev
+libasound2-dev
+libjack-dev
+libpulse-dev
