@@ -1,2 +1,2 @@
 cmake
-portaudio19-dev
+portaudio.h
