@@ -16,5 +16,4 @@ google-generativeai==0.4.0
 wave==0.0.2
 audiorecorder
 
-streamlit-microphone
 
