@@ -9,7 +9,8 @@ numpy==1.26.4
 Pillow==10.2.0
 transformers==4.38.2
 opencv-python-headless==4.9.0.80
-dlib
+https://github.com/ShameelMohamed/DriveSense/releases/download/v1.0/dlib-19.x-cp310-cp310-manylinux.whl
+
 scipy==1.12.0
 pygame==2.5.2
 assemblyai==0.20.0
