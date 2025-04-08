@@ -14,5 +14,7 @@ pygame==2.5.2
 assemblyai==0.20.0
 google-generativeai==0.4.0
 wave==0.0.2
-git+https://github.com/stefanrmmr/streamlit-audio-recorder.git#egg=streamlit-audiorec
+audiorecorder
+
+streamlit-microphone
 
