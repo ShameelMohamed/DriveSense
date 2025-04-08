@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_audio_recorder import audio_recorder
+from streamlit_audiorec import st_audiorec
 import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
