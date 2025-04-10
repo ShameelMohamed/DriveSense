@@ -1,69 +1,162 @@
 import streamlit as st
+from PIL import Image  # Import for logo
 
 # Set page configuration
 st.set_page_config(page_title="Drive Sense", page_icon="🚗", layout="wide", initial_sidebar_state="collapsed")
 
+# Add logo to sidebar
+logo = Image.open("logo.jpg")
+st.sidebar.image(logo, use_container_width=True)
+
 # Define custom CSS for card styling and background image
 background_css = """
 <style>
-    /* Background Image */
-    .stApp {
-        background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-    /* Hide default Streamlit header */
-    header {
-        visibility: hidden;
-    }
+/* Apply font globally */
+html, body, [class*="st-"] {
+    font-family: 'Poppins', sans-serif;
+}
 
-    /* Card Styles */
-    .card {
-        background-color: rgba(0, 0, 0, 0.65);
-        width: 100%;
-        border-radius: 20px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        transition: transform 0.1s, box-shadow 0.2s;
-        cursor: pointer;
-        text-align: center;
-    }
-    .card:hover {
-        transform: translateY(-30px);
-        box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
-    }
-    .card img {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-    }
-    .card-title {
-        font-size: 20px;
-        font-weight: bold;
-        margin: 10px 0;
-        color: white;
-    }
-    .card-text {
-        font-size: 14px;
-        margin: 0 10px 10px;
-        color: white;
-    }
-    .card-button {
-        background-color: purple;
-        color: white;
-        text-decoration: none;
-        padding: 10px 15px;
-        border-radius: 5px;
-        display: inline-block;
-        margin-bottom: 15px;
-        transition: background-color 0.1s;
-    }
-    .card-button:hover {
-        background-color: purple;
-    }
-    
+/* Background Image */
+.stApp {
+    background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* Hide Streamlit header */
+header {
+    visibility: hidden;
+}
+
+/* Card Styles */
+.card {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  margin: 20px;
+  display: inline-block;
+  background-color: #000;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.8s ease forwards;
+  opacity: 0;
+}
+
+/* Entrance Animation */
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  transition: background 0.3s ease;
+}
+
+.card:hover::before {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.card img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+  filter: brightness(75%);
+  z-index: 0;
+}
+
+.card:hover img {
+  transform: scale(1.1);
+  filter: brightness(50%);
+}
+
+.card-title {
+  position: absolute;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.card-text {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: white;
+  font-size: 14px;
+  padding: 0 10px;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.card-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #8000ff;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.card-button:hover {
+  background: white;
+  color: #8000ff;
+  transition: all 0.25s ease;
+}
+
+.card:hover .card-button {
+  opacity: 1;
+}
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+  .card {
+    width: 100% !important;
+    height: auto;
+    margin: 10px 0;
+  }
+}
+
+.st-emotion-cache-seewz2 a {
+  text-decoration: none;
+  color: white;
+}
 </style>
 """
 
@@ -75,6 +168,7 @@ st.subheader("")
 st.title("Welcome to DriveSense !")
 st.subheader("Your All-in-One Road Safety App")
 st.subheader("")
+
 # Create columns for horizontal layout
 col1, col2, col3, col4 = st.columns(4)
 
@@ -100,7 +194,8 @@ with col2:
             <img src="https://media.istockphoto.com/id/182150881/photo/mountain-highway-towards-the-clouds-haleakala-maui-hawaii.jpg?s=612x612&w=0&k=20&c=ZNAD3N_dqjPHO34ziErnMkqYfiebHDUyaP8226knUtg=" alt="Route Planner">
             <div class="card-title">Route Planner</div>
             <div class="card-text">Plan short and safe routes with advanced route planner.</div>
-            <a class="card-button" href="Router" onclick="window.location.href='Router'; return false;">Explore</a>
+            <div class="card-button" onclick="window.location.href='RoadHazards'">Explore</div>
+
         </div>
         """,
         unsafe_allow_html=True,
