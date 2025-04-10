@@ -3,19 +3,7 @@ firebase-admin==6.3.0
 folium==0.15.1
 streamlit-folium==0.13.0
 requests==2.31.0
-cloudinary==1.37.0
-torch==2.2.0
-numpy==1.26.4
-Pillow==10.2.0
-transformers==4.38.2
-opencv-python-headless==4.9.0.80
-https://github.com/ShameelMohamed/DriveSense/releases/download/v1.0/dlib-19.x-cp310-cp310-manylinux.whl
-cv2
-scipy==1.12.0
-pygame==2.5.2
-assemblyai==0.20.0
-google-generativeai==0.4.0
-wave==0.0.2
+
 audiorecorder
 
 
