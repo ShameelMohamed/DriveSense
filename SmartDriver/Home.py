@@ -5,7 +5,8 @@ from PIL import Image  # Import for logo
 st.set_page_config(page_title="Drive Sense", page_icon="🚗", layout="wide", initial_sidebar_state="collapsed")
 
 # Add logo to sidebar
-
+logo = Image.open("logo.jpg")
+st.sidebar.image(logo)
 
 # Define custom CSS for card styling and background image
 background_css = """
