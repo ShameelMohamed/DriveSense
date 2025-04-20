@@ -1,95 +1,97 @@
 import streamlit as st
-import numpy as np
 import mediapipe as mp
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
-import math
+import numpy as np
 import pygame
-import threading
+from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
 
-st.set_page_config(page_title="Fatigue Detection", page_icon="😴", layout="wide")
+# Constants for fatigue detection
+EYE_AR_THRESHOLD = 0.25
+YAWN_AR_THRESHOLD = 0.2
+HEAD_BEND_THRESHOLD = 20
+EYE_AR_CONSEC_FRAMES = 15
+MOUTH_OPEN_CONSEC_FRAMES = 7
+HEAD_BEND_CONSEC_FRAMES = 10
 
-# Pygame sound init
-def play_alert(volume):
-    pygame.mixer.init()
-    pygame.mixer.music.set_volume(volume)
-    pygame.mixer.music.load("beep.wav")  # Make sure beep.wav is in same folder
-    pygame.mixer.music.play()
+# Mediapipe initialization
+mp_face_mesh = mp.solutions.face_mesh
+mp_drawing = mp.solutions.drawing_utils
 
-# EAR calculator
-def eye_aspect_ratio(landmarks, eye_indices):
-    p = [np.array([landmarks[i][0], landmarks[i][1]]) for i in eye_indices]
-    A = np.linalg.norm(p[1] - p[5])
-    B = np.linalg.norm(p[2] - p[4])
-    C = np.linalg.norm(p[0] - p[3])
+# Function to calculate eye aspect ratio (EAR)
+def eye_aspect_ratio(eye):
+    A = np.linalg.norm(eye[1] - eye[5])
+    B = np.linalg.norm(eye[2] - eye[4])
+    C = np.linalg.norm(eye[0] - eye[3])
     ear = (A + B) / (2.0 * C)
     return ear
 
-# MAR calculator
-def mouth_aspect_ratio(landmarks):
-    top = np.array(landmarks[13])
-    bottom = np.array(landmarks[14])
-    mar = np.linalg.norm(top - bottom)
+# Function to calculate mouth aspect ratio (MAR)
+def mouth_aspect_ratio(mouth):
+    A = np.linalg.norm(mouth[13] - mouth[19])
+    B = np.linalg.norm(mouth[14] - mouth[18])
+    C = np.linalg.norm(mouth[15] - mouth[17])
+    D = np.linalg.norm(mouth[12] - mouth[16])
+    mar = (A + B + C) / (2.0 * D)
     return mar
 
+# Function to calculate vertical distance between nose tip and eyes
+def head_bend_distance(landmarks):
+    nose_tip = landmarks[30]
+    left_eye = landmarks[36]
+    right_eye = landmarks[45]
+    eyes_midpoint = ((left_eye[0] + right_eye[0]) // 2, (left_eye[1] + right_eye[1]) // 2)
+    vertical_distance = nose_tip[1] - eyes_midpoint[1]
+    return vertical_distance
+
+# Play sound alert
+def play_sound(sound_file, volume):
+    pygame.mixer.init()
+    pygame.mixer.music.set_volume(volume)
+    pygame.mixer.music.load(sound_file)
+    pygame.mixer.music.play()
+
+# WebRTC transformer for processing video frames
 class VideoTransformer(VideoTransformerBase):
     def __init__(self):
-        self.face_mesh = mp.solutions.face_mesh.FaceMesh(
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5
-        )
-        self.EYE_AR_THRESH = 0.23
-        self.EYE_AR_CONSEC_FRAMES = 15
-        self.MOUTH_AR_THRESH = 15  # Pixel distance
-        self.MOUTH_AR_FRAMES = 7
-        self.eye_counter = 0
-        self.mouth_counter = 0
+        self.face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
     def transform(self, frame):
-        rgb_frame = frame.to_ndarray(format="bgr24")
-        img_rgb = rgb_frame[:, :, ::-1]
+        # Convert the frame to RGB for mediapipe processing
+        frame_rgb = frame.to_rgb()
+        results = self.face_mesh.process(frame_rgb)
 
-        results = self.face_mesh.process(img_rgb)
         if results.multi_face_landmarks:
-            landmarks = results.multi_face_landmarks[0]
-            h, w, _ = img_rgb.shape
-            coords = [(int(p.x * w), int(p.y * h)) for p in landmarks.landmark]
+            for landmarks in results.multi_face_landmarks:
+                # Extract eye, mouth, and head bend information
+                left_eye = []
+                right_eye = []
+                for i in range(36, 42):
+                    left_eye.append(np.array([landmarks.landmark[i].x, landmarks.landmark[i].y]))
+                for i in range(42, 48):
+                    right_eye.append(np.array([landmarks.landmark[i].x, landmarks.landmark[i].y]))
+                mouth = []
+                for i in range(48, 68):
+                    mouth.append(np.array([landmarks.landmark[i].x, landmarks.landmark[i].y]))
 
-            # Eye landmark indices (mediapipe face mesh)
-            LEFT_EYE = [33, 160, 158, 133, 153, 144]
-            RIGHT_EYE = [362, 385, 387, 263, 373, 380]
+                # Calculate EAR, MAR, and head bend distance
+                avg_ear = (eye_aspect_ratio(left_eye) + eye_aspect_ratio(right_eye)) / 2.0
+                mar = mouth_aspect_ratio(mouth)
+                vertical_distance = head_bend_distance(landmarks.landmark)
 
-            left_ear = eye_aspect_ratio(coords, LEFT_EYE)
-            right_ear = eye_aspect_ratio(coords, RIGHT_EYE)
-            avg_ear = (left_ear + right_ear) / 2
+                # Detect fatigue conditions
+                if avg_ear < EYE_AR_THRESHOLD:
+                    play_sound('alert.wav', 0.5)
+                if mar > YAWN_AR_THRESHOLD:
+                    play_sound('yawn.wav', 0.5)
+                if vertical_distance > HEAD_BEND_THRESHOLD:
+                    play_sound('head_bend.wav', 0.5)
 
-            mar = mouth_aspect_ratio(coords)
+        # Return frame to streamlit
+        return frame
 
-            if avg_ear < self.EYE_AR_THRESH:
-                self.eye_counter += 1
-                if self.eye_counter >= self.EYE_AR_CONSEC_FRAMES:
-                    threading.Thread(target=play_alert, args=(volume,), daemon=True).start()
-                    cv2.putText(rgb_frame, "Eyes Closed!", (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            else:
-                self.eye_counter = 0
-
-            if mar > self.MOUTH_AR_THRESH:
-                self.mouth_counter += 1
-                if self.mouth_counter >= self.MOUTH_AR_FRAMES:
-                    threading.Thread(target=play_alert, args=(volume,), daemon=True).start()
-                    cv2.putText(rgb_frame, "Yawning!", (30, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-            else:
-                self.mouth_counter = 0
-
-        return rgb_frame
-
-# Sidebar settings
-st.sidebar.title("Settings")
+# Streamlit UI setup
+st.title("🚗 Fatigue Detection System")
+st.sidebar.header("Alert Settings")
 volume = st.sidebar.slider("Volume", 0.0, 1.0, 0.5)
 
-st.title("😴 Real-Time Fatigue Detection")
-st.markdown("Detects **eye closure** and **yawning** using Mediapipe and WebRTC. No OpenCV or dlib used.")
-
-# Start webcam
-webrtc_streamer(key="fatigue", video_transformer_factory=VideoTransformer)
+# Run WebRTC video streamer
+webrtc_streamer(key="fatigue-detection", video_transformer_factory=VideoTransformer)
