@@ -1,5 +1,5 @@
 import streamlit as st
-import cv2
+#import cv2
 
 st.title("Camera Test with OpenCV")
 
