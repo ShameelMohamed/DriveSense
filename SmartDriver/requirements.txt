@@ -5,9 +5,13 @@ streamlit-folium==0.13.0
 requests==2.31.0
 
 
-streamlit
-opencv-python-headless
-mediapipe
-numpy
+
 scipy
-pygame
+
+
+
+streamlit==1.30.0
+streamlit-webrtc==0.45.0
+mediapipe==0.10.9
+numpy==1.24.4
+pygame==2.5.2
