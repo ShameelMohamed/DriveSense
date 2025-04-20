@@ -39,7 +39,7 @@ class VideoTransformer:
 webrtc_streamer = webrtc_streamer(
     key="live-video-capture",  # Unique key for Streamlit session state
     mode=WebRtcMode.SENDRECV,  # Receive and send video
-    video_transformer_factory=VideoTransformer,
+    video_processor_factory=VideoTransformer,
     media_stream_constraints={"video": True, "audio": False}  # Only video
 )
 
