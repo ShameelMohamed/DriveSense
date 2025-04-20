@@ -4,26 +4,31 @@ from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 st.set_page_config(page_title="Live Video", layout="wide")
 st.title("🎥 Live Webcam Stream")
 
-# Hide Streamlit WebRTC control buttons using CSS
+# CSS to hide buttons and container spacing
 st.markdown("""
     <style>
-    button[title="Start"], button[title="Stop"], button[title="Snapshot"] {
-        visibility: hidden !important;
-        height: 0px !important;
-        padding: 0px !important;
-        margin: 0px !important;
+    .MuiButtonBase-root {
+        display: none !important;
+    }
+    [data-testid="stVideoStream"] button {
+        display: none !important;
+    }
+    .MuiBox-root {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: 0 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Dummy video processor to stream frames (no logic)
+# Dummy processor
 class VideoProcessor(VideoProcessorBase):
     def recv(self, frame):
         return frame
 
-# Auto-start video stream
+# Stream without buttons
 webrtc_streamer(
-    key="auto_stream",
+    key="stream",
     video_processor_factory=VideoProcessor,
     media_stream_constraints={"video": True, "audio": False},
     rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
