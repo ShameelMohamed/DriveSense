@@ -1,45 +1,26 @@
 import streamlit as st
-from transformers import pipeline
-import pygame
-from PIL import Image
-import numpy as np
+import streamlit_webrtc as webrtc
 
-# Initialize Streamlit's page configuration
-st.set_page_config(page_title="Fatigue Detection", page_icon="🚗", layout="wide", initial_sidebar_state="collapsed")
+# Streamlit page configuration
+st.set_page_config(page_title="Live Video Capture", layout="wide")
 
-# Initialize the Hugging Face model for classification (you can replace it with a custom fatigue model)
-fatigue_model = pipeline("image-classification", model="your-hugging-face-model")
+# Add title
+st.title("Live Video Capture with Streamlit")
 
-# Initialize pygame for alert sound
-def play_sound(sound_file):
-    pygame.mixer.init()
-    pygame.mixer.music.load(sound_file)
-    pygame.mixer.music.play()
+# WebRTC configuration for capturing video
+class VideoProcessor:
+    def recv(self, frame):
+        return frame  # Just return the frame for now
 
-# Streamlit Sidebar for alert settings
-with st.sidebar:
-    st.header("Alert Settings")
-    volume = st.slider("Volume", 0.0, 1.0, 0.5)
-    st.session_state.eye_alert = st.checkbox("Detect Eyes Closure", value=True)
-    st.session_state.head_alert = st.checkbox("Detect Head Down", value=True)
-    sound_option = st.radio("Select Alert Sound", ["beep", "buzzer", "horn"])
+# Create a WebRTC component to capture live video
+webrtc_streamer = webrtc.StreamlitWebRtc(
+    key="live-video-capture", 
+    video_processor_factory=VideoProcessor, 
+    media_stream_constraints={"video": True}
+)
 
-# Streamlit Camera Input
-camera_input = st.camera_input("Capture a photo")
-
-if camera_input:
-    # Convert the captured image to PIL format
-    image = Image.open(camera_input)
-    image = np.array(image)  # Convert to NumPy array for model processing
-
-    # Pass the image to the Hugging Face model for classification
-    results = fatigue_model(image)
-
-    # Process the model's output and trigger alerts
-    if "fatigue" in results[0]['label']:  # Assuming the model can classify "fatigue"
-        play_sound(f"{sound_option}.wav")  # Play the selected sound if fatigue is detected
-        st.write("Fatigue detected! Alert triggered.")
-
-    # Display the image and model results
-    st.image(image, caption="Captured Image", use_column_width=True)
-    st.write("Model Prediction: ", results)
+# Display message for users
+if webrtc_streamer.video_transformer:
+    st.write("Video stream is running...")
+else:
+    st.write("Waiting for video stream...")
