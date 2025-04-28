@@ -1,52 +1,93 @@
+# --- API Keys ---
+ASSEMBLYAI_API_KEY = "11c6274223b9472fa206d42b02f1de1f"
+GEMINI_API_KEY = "AIzaSyByJzlUoKiO1y1xytWczcnQvda9SAwYReo"
+ELEVENLABS_API_KEY = "sk_a16a7b74f453342e927cbecec40312123880e614972b9563"
+
 import streamlit as st
 import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
-import os
-from streamlit_mic_recorder import mic_recorder  # <<< Changed
+from streamlit_mic_recorder import mic_recorder
 
-# Streamlit page settings
-st.set_page_config(page_title="AI Voice Companion", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
+# --- Streamlit Page Settings ---
+st.set_page_config(
+    page_title="AI Voice Companion",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# Background style
+# --- Background & Styling ---
 background_css = """
- <style>
-     .stApp {
-         background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
-         background-size: cover;
-         background-position: center;
-         background-attachment: fixed;
-     }
-     header {
-         visibility: hidden;
-     }
- </style>
+<style>
+    /* Main background */
+    .stApp {
+        background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    
+    /* Hide headers/footers */
+    header, footer {visibility: hidden;}
+    
+    /* FULL-WIDTH MIC BUTTON SOLUTION */
+    /* 1. Remove all parent padding */
+    div[data-testid="column"] > div[data-testid="stVerticalBlock"] > div:has(> div.element-container > div.stButton) {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* 2. Force button to full width */
+    div.stButton > button {
+        width: 100% !important;
+        display: block !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    
+    /* 3. Glow effects for the mic */
+    div.stButton > button {
+        background: #ff4b4b !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 20px !important;
+        padding: 16px 32px !important;
+        border: 2px solid white !important;
+        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b !important;
+        transition: 0.3s ease !important;
+    }
+    
+    div.stButton > button:hover {
+        background-color: #ff7b7b !important;
+        box-shadow: 0 0 30px #ff7b7b, 0 0 60px #ff7b7b !important;
+    }
+</style>
 """
 st.markdown(background_css, unsafe_allow_html=True)
 
-# Configure APIs
-aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
-gen_ai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = gen_ai.GenerativeModel('gemini-1.5-flash')
+# --- API Configuration ---
+aai.settings.api_key = ASSEMBLYAI_API_KEY
+gen_ai.configure(api_key=GEMINI_API_KEY)
 
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+# Voice IDs
 ELEVENLABS_VOICE_ID_MALE = "pNInz6obpgDQGcFmaJgB"
 ELEVENLABS_VOICE_ID_FEMALE = "21m00Tcm4TlvDq8ikWAM"
 
-# App Title
+# --- App Title ---
 st.title("🤖 Ask Pookie - Your AI Companion")
 
-# Sidebar settings
+# --- Sidebar Settings ---
 st.sidebar.header("Settings")
 voice_selection = st.sidebar.radio("Select Voice", ["Male", "Female"])
 language_selection = st.sidebar.radio("Choose Language", ["English", "Tamil", "Malayalam", "Telugu", "Hindi"], index=0)
 volume_percent = st.sidebar.slider("Volume", 0, 100, 100)
 
-# Voice ID selection
+# --- Voice ID ---
 ELEVENLABS_VOICE_ID = ELEVENLABS_VOICE_ID_FEMALE if voice_selection == "Female" else ELEVENLABS_VOICE_ID_MALE
 ELEVENLABS_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
 
-# Functions
+# --- Functions ---
 def transcribe_audio(audio_file):
     transcriber = aai.Transcriber()
     transcript = transcriber.transcribe(audio_file)
@@ -55,6 +96,7 @@ def transcribe_audio(audio_file):
 def gemini_chat(query, lang):
     try:
         prompt = f"Respond in {lang}. For the query '{query}', generate a helpful response in 10-25 words without asking follow-up questions."
+        model = gen_ai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -75,7 +117,6 @@ def text_to_speech_elevenlabs(text):
         }
     }
     response = requests.post(ELEVENLABS_URL, json=data, headers=headers)
-
     if response.status_code == 200:
         audio_path = "response_audio.mp3"
         with open(audio_path, "wb") as f:
@@ -86,33 +127,30 @@ def text_to_speech_elevenlabs(text):
         return None
 
 # --- Main App ---
-
 st.subheader("🎙 Record your voice")
 
-# 🎤 NEW MIC RECORDER
+# Full-width mic button
 audio_data = mic_recorder(
-    start_prompt="🎤 Start recording",
+    start_prompt="🎤 Start recording (Full Width)",
     stop_prompt="⏹ Stop recording",
-    key="recorder"
+    key="recorder_fullwidth"
 )
 
+# After Recording
 if audio_data:
     st.success("✅ Recording complete!")
+    audio_bytes = audio_data["bytes"]
+    st.audio(audio_bytes, format="audio/wav")
 
-    audio_bytes = audio_data["bytes"]  # <-- extract the bytes part
-
-    st.audio(audio_bytes, format="audio/wav")  # Play audio
-
-    # Save audio to a file
     with open("temp_audio.wav", "wb") as f:
         f.write(audio_bytes)
 
-    # Transcribe
     user_text = transcribe_audio("temp_audio.wav")
 
     if user_text.strip():
         st.success(f"✅ Recognized: {user_text}")
         response = gemini_chat(user_text, language_selection)
+
         st.subheader("💬 AI Response")
         st.write(response)
 
