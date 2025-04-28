@@ -9,14 +9,11 @@ requests==2.31.0
 scipy
 
 streamlit==1.30.0
-transformers
-torch
-pygame
+
 
 
 streamlit==1.30.0
 streamlit-webrtc==0.46.0
-aiortc==1.5.0
-av==8.1.0
+
 numpy
 
