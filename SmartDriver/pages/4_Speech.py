@@ -41,12 +41,10 @@ background_css = f"""
     .mic-container button:hover {{
         background-color: #ff7b7b !important;
     }}
-    /* Mic container background transparent */
     .mic-container > div {{
         background: transparent !important;
         box-shadow: none !important;
     }}
-
     @keyframes glow {{
         from {{
             box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b;
@@ -54,6 +52,19 @@ background_css = f"""
         to {{
             box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b;
         }}
+    }}
+    /* Remove padding/margin/background around mic recorder */
+    div[data-testid="stApp"] > div:first-child {{
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }}
+    div.st-emotion-cache-1kyxreq.e1f1d6gn3 {{
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        box-shadow: none !important;
     }}
 </style>
 """
