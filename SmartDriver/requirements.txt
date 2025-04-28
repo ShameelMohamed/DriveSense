@@ -11,4 +11,5 @@ cloudinary
 google.generativeai
 streamlit-webrtc==0.46.0
 streamlit_autorefresh
-
+streamlit-mic-recorder
+assemblyai
