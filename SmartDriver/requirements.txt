@@ -4,7 +4,7 @@ folium==0.15.1
 streamlit-folium==0.13.0
 requests==2.31.0
 cloudinary
-
+torch
 
 scipy
 
