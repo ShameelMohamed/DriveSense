@@ -4,11 +4,28 @@ import re
 import time
 import random
 
+st.set_page_config(page_title="AI-TODO", page_icon="✔️", layout="wide", initial_sidebar_state="collapsed")
+
+background_css = """
+<style>
+    .stApp {
+        background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    header {
+        visibility: hidden;
+    }
+</style>
+"""
+st.markdown(background_css, unsafe_allow_html=True)
+
 # --- Setup ---
 gen_ai.configure(api_key="AIzaSyByJzlUoKiO1y1xytWczcnQvda9SAwYReo")
 model = gen_ai.GenerativeModel('gemini-1.5-flash')
 
-st.set_page_config(page_title="Tour TODO List Generator", page_icon="🗺", layout="centered")
+
 
 st.title("🗺 Tour TODO List Generator")
 st.caption("Plan your journey smarter with AI-powered TODO lists!")
