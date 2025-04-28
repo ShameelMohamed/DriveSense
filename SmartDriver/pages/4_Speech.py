@@ -17,7 +17,7 @@ st.set_page_config(
 background_css = f"""
 <style>
     .stApp {{
-        background-image: url('https://speechbot-jgl7babx7s8ebfrvg79jf.streamlit.app/60a8cd21-805a-475d-ba3a-0847ee161451.png');
+        background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
