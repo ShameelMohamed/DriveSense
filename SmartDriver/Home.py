@@ -4,7 +4,7 @@ import streamlit as st
 st.set_page_config(page_title="Drive Sense", page_icon="🚗", layout="wide", initial_sidebar_state="collapsed")
 
 # Add logo to sidebar using the provided URL
-st.sidebar.image("https://media-hosting.imagekit.io/963a894003644c1d/logo.jpg?Expires=1838884565&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=aOoYDdWn~y2eLbJwkEovyF6eTOlu8S-0t7H2txxkgtubV7c7BoI8rGkDB5Rl6KzDlenUrr898m0xNdnvfOGj4c8bgRCMZKHSkDv49zR9vJKKo0r9aPbKuIQqSXGoHfqSf89ghydzZgUJ~HvdJRpY61kgMgbvZZ7cwj2hE5RqHpmtHSvZyWxNHrvNlnQ3a5GLxmSFWW9LexOkTxlZQqoK41Wjnb4NZPksVBT4QerXCDOnDjZgWfESvhpIK6szK630QTruB5uJXTFPMnmxnUDxXGdvLuNL9BNn9xbAYbB-QpJ5DLE4vvaaJlWbj~An8kENrqV2tyXm4OUO6nn9M198qg__", use_column_width=True)
+st.sidebar.image("https://media-hosting.imagekit.io/963a894003644c1d/logo.jpg?Expires=1838884565&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=aOoYDdWn~y2eLbJwkEovyF6eTOlu8S-0t7H2txxkgtubV7c7BoI8rGkDB5Rl6KzDlenUrr898m0xNdnvfOGj4c8bgRCMZKHSkDv49zR9vJKKo0r9aPbKuIQqSXGoHfqSf89ghydzZgUJ~HvdJRpY61kgMgbvZZ7cwj2hE5RqHpmtHSvZyWxNHrvNlnQ3a5GLxmSFWW9LexOkTxlZQqoK41Wjnb4NZPksVBT4QerXCDOnDjZgWfESvhpIK6szK630QTruB5uJXTFPMnmxnUDxXGdvLuNL9BNn9xbAYbB-QpJ5DLE4vvaaJlWbj~An8kENrqV2tyXm4OUO6nn9M198qg__", use_container_width=True)
 
 
 # Enhanced and Responsive CSS
