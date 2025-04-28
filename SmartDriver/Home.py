@@ -509,19 +509,19 @@ st.markdown("""
       <div class="card-button">Explore</div>
     </div>
   </a>
-  <a href="Emergency" style="text-decoration:none;">
+  <a href="FatigueDetection" style="text-decoration:none;">
     <div class="card" tabindex="0">
-      <img src="https://media.istockphoto.com/id/1138570112/photo/ambulance-car-on-the-road.jpg?s=612x612&w=0&k=20&c=6QwQw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Q=" alt="Emergency Services">
-      <div class="card-title">Emergency Services</div>
-      <div class="card-text">Quickly access emergency contacts and services.</div>
+      <img src="https://img.freepik.com/premium-photo/dashboard-car-shows-dashboard-with-controls-dashboard_916191-384838.jpg" alt="FatigueDetection">
+      <div class="card-title">Fatigue Detection</div>
+      <div class="card-text">Stay alert while driving with fatigue monitoring.</div>
       <div class="card-button">Explore</div>
     </div>
   </a>
-  <a href="Tips" style="text-decoration:none;">
+  <a href="Speech" style="text-decoration:none;">
     <div class="card" tabindex="0">
-      <img src="https://media.istockphoto.com/id/1165067632/photo/road-safety-concept.jpg?s=612x612&w=0&k=20&c=6QwQw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Qw6Q=" alt="Driving Tips">
-      <div class="card-title">Driving Tips</div>
-      <div class="card-text">Learn best practices for safe and efficient driving.</div>
+      <img src="https://ichef.bbci.co.uk/ace/standard/1024/cpsprodpb/14202/production/_108243428_gettyimages-871148930.jpg" alt="Speech">
+      <div class="card-title">Speech</div>
+      <div class="card-text">Get real-time road safety advice from our speech bot.</div>
       <div class="card-button">Explore</div>
     </div>
   </a>
