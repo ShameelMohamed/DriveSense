@@ -4,7 +4,6 @@ from firebase_admin import credentials, firestore
 import folium
 from streamlit_folium import st_folium
 import requests
-import json
 
 st.set_page_config(page_title="Route Planner", page_icon="🗺️", layout="wide", initial_sidebar_state="collapsed")
 
@@ -31,12 +30,11 @@ ORS_API_KEY = "5b3ce3597851110001cf6248e6cfd54b45cc4191bcde2aa3dc9e4a67"
 def initialize_firebase():
     if not firebase_admin._apps:
         try:
-            # Debug: Show which secrets are available
-            if 'firebase' not in st.secrets:
-                st.error("Firebase secrets not found in Streamlit secrets!")
+            if not hasattr(st.secrets, "firebase"):
+                st.error("Firebase configuration not found in secrets!")
                 return False
             
-            # Create credentials dictionary directly from secrets
+            # Create credentials dictionary
             firebase_config = {
                 "type": st.secrets.firebase.type,
                 "project_id": st.secrets.firebase.project_id,
@@ -51,23 +49,18 @@ def initialize_firebase():
                 "universe_domain": st.secrets.firebase.universe_domain
             }
             
-            # Initialize Firebase
             cred = credentials.Certificate(firebase_config)
             firebase_admin.initialize_app(cred)
             return True
         except Exception as e:
-            st.error(f"Firebase initialization failed: {str(e)}")
-            st.error("Please check your Firebase credentials in Streamlit Secrets")
+            st.error(f"Firebase initialization error: {str(e)}")
             return False
     return True
 
 if not initialize_firebase():
-    st.stop()  # Stop the app if Firebase fails to initialize
+    st.stop()
 
 db = firestore.client()
-
-# App title
-st.title("🚗 SmartDriver - Route Planner with Hazard Warnings")
 
 # Initialize session state
 if "locations" not in st.session_state:
@@ -75,13 +68,18 @@ if "locations" not in st.session_state:
 if "route_coords" not in st.session_state:
     st.session_state.route_coords = None
 
-# Reset markers button
-if st.button("Reset Markers"):
+# Improved reset function
+def reset_markers():
     st.session_state.locations = []
     st.session_state.route_coords = None
-    st.experimental_rerun()
+    # Use success message instead of rerun
+    st.success("Markers reset successfully!")
 
-# Initialize map (Consistent Zoom)
+# Reset markers button
+if st.button("Reset Markers"):
+    reset_markers()
+
+# Initialize map
 map_center = [20.5937, 78.9629]  # Default center: India
 m = folium.Map(location=map_center, zoom_start=5)
 
@@ -90,7 +88,7 @@ for idx, loc in enumerate(st.session_state.locations):
     label = "Start" if idx == 0 else "Destination"
     folium.Marker(location=loc, popup=label, icon=folium.Icon(color="blue")).add_to(m)
 
-# Display the first map (Fixed height)
+# Display the first map
 map_data = st_folium(m, height=600, width="100%", key="main_map")
 
 # Capture clicked points
@@ -98,32 +96,33 @@ if map_data and map_data.get("last_clicked"):
     lat, lng = map_data["last_clicked"]["lat"], map_data["last_clicked"]["lng"]
     if len(st.session_state.locations) < 2:
         st.session_state.locations.append((lat, lng))
-        st.experimental_rerun()
+        # Use success message instead of rerun
+        st.success(f"Location {len(st.session_state.locations)} set!")
 
 # Display selected locations
 if len(st.session_state.locations) == 2:
-    st.write(f"🔹 *Start:* {st.session_state.locations[0]}")
-    st.write(f"🔹 *Destination:* {st.session_state.locations[1]}")
+    st.write(f"🔹 Start: {st.session_state.locations[0]}")
+    st.write(f"🔹 Destination: {st.session_state.locations[1]}")
 else:
     st.write("Click two points on the map to set the Start and Destination.")
 
 # Route type selection
 route_type = st.radio("Select Route Type", ["Shortest Route", "Safest Route"])
 
-# Function to fetch hazard locations from Firebase
+# Function to fetch hazard locations
 def fetch_hazard_locations():
     try:
-        hazard_docs = db.collection("uploads").stream()
         hazards = []
-        for doc in hazard_docs:
+        docs = db.collection("uploads").stream()
+        for doc in docs:
             data = doc.to_dict()
             if "gps_location" in data:
                 try:
                     lat, lon = map(float, data["gps_location"].split(","))
                     img_url = data.get("image_url", "")
                     hazards.append((lat, lon, img_url))
-                except Exception as e:
-                    st.warning(f"Couldn't parse location for hazard: {str(e)}")
+                except ValueError:
+                    continue
         return hazards
     except Exception as e:
         st.error(f"Error fetching hazards: {str(e)}")
@@ -149,58 +148,54 @@ def get_route(start, end, avoid_hazards=False):
                 "type": "MultiPolygon",
                 "coordinates": []
             }
-
             for hazard in hazards:
                 lat, lon = hazard[0], hazard[1]
-                # Small square buffer around each hazard
-                buffer_size = 0.001  # ~500m
+                buffer_size = 0.001
                 polygon = [[
                     [lon - buffer_size, lat - buffer_size],
                     [lon + buffer_size, lat - buffer_size],
                     [lon + buffer_size, lat + buffer_size],
                     [lon - buffer_size, lat + buffer_size],
-                    [lon - buffer_size, lat - buffer_size]  # Close the polygon
+                    [lon - buffer_size, lat - buffer_size]
                 ]]
                 avoid_polygons["coordinates"].append(polygon)
-            
             payload["options"] = {"avoid_polygons": avoid_polygons}
 
     try:
         response = requests.post(ors_url, headers=headers, json=payload)
         response.raise_for_status()
-        
-        response_json = response.json()
-        if "features" in response_json and response_json["features"]:
-            route_data = response_json["features"][0]["geometry"]["coordinates"]
-            route_coords = [(lat, lng) for lng, lat in route_data]
+        data = response.json()
+        if data.get("features"):
+            route_coords = [(lat, lng) for lng, lat in data["features"][0]["geometry"]["coordinates"]]
             return route_coords, None
-        else:
-            return None, "No route features found in response"
-            
+        return None, "No route found"
     except Exception as e:
-        return None, f"Route API error: {str(e)}"
+        return None, f"Route error: {str(e)}"
 
 # Button to calculate and show route
 if st.button("Get Route"):
     if len(st.session_state.locations) == 2:
-        start, end = st.session_state.locations
-        avoid_hazards = route_type == "Safest Route"
-        
         with st.spinner("Calculating route..."):
-            route_coords, error_msg = get_route(start, end, avoid_hazards)
-
+            route_coords, error_msg = get_route(
+                st.session_state.locations[0],
+                st.session_state.locations[1],
+                route_type == "Safest Route"
+            )
         if route_coords:
             st.session_state.route_coords = route_coords
-            st.success("Route calculated successfully!")
+            st.success("Route calculated!")
         else:
             st.error(error_msg)
 
-# Render updated map with route
-route_map = folium.Map(
-    location=st.session_state.locations[0] if st.session_state.locations else map_center,
-    zoom_start=5,
-    key="route_map"
-)
+# Render final map
+if st.session_state.locations:
+    route_map = folium.Map(
+        location=st.session_state.locations[0],
+        zoom_start=12,
+        key="route_map"
+    )
+else:
+    route_map = folium.Map(location=map_center, zoom_start=5, key="route_map")
 
 # Add markers
 for idx, loc in enumerate(st.session_state.locations):
@@ -208,31 +203,23 @@ for idx, loc in enumerate(st.session_state.locations):
     folium.Marker(location=loc, popup=label, icon=folium.Icon(color="blue")).add_to(route_map)
 
 # Add hazard markers
-hazard_locations = fetch_hazard_locations()
-for hazard in hazard_locations:
+for hazard in fetch_hazard_locations():
     lat, lon, img_url = hazard
-    popup_html = f"""
-    <div style="text-align: center;">
-        <img src="{img_url}" width="200px"><br>
-        <b>🚧 Hazard Location</b><br>
-        {lat}, {lon}
-    </div>
-    """
+    popup_html = f'<div style="width:200px"><img src="{img_url}" style="width:100%"><br>Hazard: {lat:.4f}, {lon:.4f}</div>'
     folium.Marker(
-        location=[lat, lon],
-        popup=folium.Popup(popup_html, max_width=300),
+        [lat, lon],
+        popup=folium.Popup(popup_html, max_width=250),
         icon=folium.Icon(color="red", icon="exclamation-triangle", prefix="fa")
     ).add_to(route_map)
 
 # Add route if available
 if st.session_state.route_coords:
     folium.PolyLine(
-        st.session_state.route_coords, 
-        color="blue", 
-        weight=5, 
-        opacity=0.7,
-        tooltip="Calculated Route"
+        st.session_state.route_coords,
+        color="blue",
+        weight=5,
+        opacity=0.7
     ).add_to(route_map)
 
 # Display the final map
-st_folium(route_map, height=600, width="100%", key="final_map")
+st_folium(route_map, height=600, width="100%")
