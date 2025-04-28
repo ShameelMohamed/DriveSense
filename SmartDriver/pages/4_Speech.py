@@ -14,61 +14,60 @@ st.set_page_config(
 )
 
 # --- Background & Styling ---
-background_css = f"""
+background_css = """
 <style>
-    .stApp {{
+    .stApp {
         background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-    }}
-    header {{
-        visibility: hidden;
-    }}
-    /* Mic button container */
-    .mic-container button {{
-        background: #ff4b4b;
-        color: white;
-        font-weight: bold;
-        font-size: 18px;
-        padding: 12px 28px;
-        border: 2px solid white;
-        border-radius: 12px;
-        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b;
-        animation: glow 2s infinite alternate;
-        transition: 0.3s ease;
-    }}
-    .mic-container button:hover {{
-        background-color: #ff7b7b !important;
-    }}
-    .mic-container > div {{
-        background: transparent !important;
-        box-shadow: none !important;
-    }}
-    @keyframes glow {{
-        from {{
-            box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b;
-        }}
-        to {{
-            box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b;
-        }}
-    }}
-    /* Remove padding/margin/background around mic recorder */
-    div[data-testid="stApp"] > div:first-child {{
-        background: transparent !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        box-shadow: none !important;
-    }}
-    div.st-emotion-cache-1kyxreq.e1f1d6gn3 {{
-        background: transparent !important;
-        padding: 0 !important;
-        margin: 0 auto !important;
-        box-shadow: none !important;
-    }}
+    }
+    header { visibility: hidden; }
 </style>
 """
 st.markdown(background_css, unsafe_allow_html=True)
+
+# --- Mic Button CSS (Fix dark background) ---
+mic_button_css = """
+<style>
+/* Mic container fix */
+div[data-testid="stHorizontalBlock"] > div:first-child > div {
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    display: flex;
+    justify-content: center;
+}
+/* Button styling */
+div[data-testid="stHorizontalBlock"] > div:first-child > div > button {
+    background: #ff4b4b !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 18px !important;
+    padding: 12px 28px !important;
+    border: 2px solid white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b !important;
+    animation: glow 2s infinite alternate !important;
+    transition: 0.3s ease;
+}
+div[data-testid="stHorizontalBlock"] > div:first-child > div > button:hover {
+    background-color: #ff7b7b !important;
+}
+
+/* Mic button glow effect */
+@keyframes glow {
+    from {
+        box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b;
+    }
+    to {
+        box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b;
+    }
+}
+</style>
+"""
+st.markdown(mic_button_css, unsafe_allow_html=True)
 
 # --- API Configuration ---
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
@@ -137,15 +136,11 @@ def text_to_speech_elevenlabs(text):
 st.subheader("🎙 Record your voice")
 
 # 🎤 Mic Recorder
-st.markdown('<div class="mic-container">', unsafe_allow_html=True)
-
 audio_data = mic_recorder(
     start_prompt="🎤 Start recording",
     stop_prompt="⏹ Stop recording",
     key="recorder"
 )
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 # --- After Recording ---
 if audio_data:
