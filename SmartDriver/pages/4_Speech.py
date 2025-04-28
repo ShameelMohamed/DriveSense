@@ -1,12 +1,8 @@
-# --- API Keys ---
-ASSEMBLYAI_API_KEY = "11c6274223b9472fa206d42b02f1de1f"
-GEMINI_API_KEY = "AIzaSyByJzlUoKiO1y1xytWczcnQvda9SAwYReo"
-ELEVENLABS_API_KEY = "sk_a16a7b74f453342e927cbecec40312123880e614972b9563"
-
 import streamlit as st
 import assemblyai as aai
 import google.generativeai as gen_ai
 import requests
+import os
 from streamlit_mic_recorder import mic_recorder
 
 # --- Streamlit Page Settings ---
@@ -28,40 +24,33 @@ background_css = """
     }
     header, footer {visibility: hidden;}
 
-    /* FULL-WIDTH MICROPHONE BUTTON SOLUTION */
-    .mic-container {
-        position: relative;
-        width: 100vw;
-        left: 50%;
-        right: 50%;
-        margin-left: -50vw;
-        margin-right: -50vw;
-    }
-
-    .mic-container > div {
-        width: 100% !important;
-        max-width: none !important;
+    /* Remove padding around microphone button */
+    .element-container:has(.mic-container) {
         padding: 0 !important;
         margin: 0 !important;
-        background: transparent !important;
     }
 
+    /* Mic button style */
     .mic-container button {
         width: 100% !important;
-        background: #ff4b4b !important;
-        color: white !important;
-        font-weight: bold !important;
-        font-size: 20px !important;
-        padding: 16px 32px !important;
-        border: 2px solid white !important;
-        border-radius: 16px !important;
-        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b !important;
-        animation: glow 2s infinite alternate !important;
-        transition: 0.3s ease !important;
+        background: #ff4b4b;
+        color: white;
+        font-weight: bold;
+        font-size: 20px;
+        padding: 16px 32px;
+        border: 2px solid white;
+        border-radius: 16px;
+        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b;
+        animation: glow 2s infinite alternate;
+        transition: 0.3s ease;
     }
-
     .mic-container button:hover {
         background-color: #ff7b7b !important;
+    }
+    /* Remove background behind mic container */
+    .mic-container > div {
+        background: transparent !important;
+        box-shadow: none !important;
     }
 
     @keyframes glow {
@@ -73,10 +62,11 @@ background_css = """
 st.markdown(background_css, unsafe_allow_html=True)
 
 # --- API Configuration ---
-aai.settings.api_key = ASSEMBLYAI_API_KEY
-gen_ai.configure(api_key=GEMINI_API_KEY)
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
+gen_ai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = gen_ai.GenerativeModel('gemini-1.5-flash')
 
-# Voice IDs
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID_MALE = "pNInz6obpgDQGcFmaJgB"
 ELEVENLABS_VOICE_ID_FEMALE = "21m00Tcm4TlvDq8ikWAM"
 
@@ -103,7 +93,6 @@ def transcribe_audio(audio_file):
 def gemini_chat(query, lang):
     try:
         prompt = f"Respond in {lang}. For the query '{query}', generate a helpful response in 10-25 words without asking follow-up questions."
-        model = gen_ai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -138,16 +127,19 @@ def text_to_speech_elevenlabs(text):
 
 st.subheader("🎙 Record your voice")
 
-# Mic Recorder - Now truly full-width
+# 🎤 Mic Recorder (full-width)
 st.markdown('<div class="mic-container">', unsafe_allow_html=True)
+
 audio_data = mic_recorder(
     start_prompt="🎤 Start recording",
     stop_prompt="⏹ Stop recording",
-    key="recorder"
+    key="recorder",
+    use_container_width=True   # 👈 important
 )
+
 st.markdown('</div>', unsafe_allow_html=True)
 
-# After Recording
+# --- After Recording ---
 if audio_data:
     st.success("✅ Recording complete!")
 
