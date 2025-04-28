@@ -25,9 +25,22 @@ st.markdown(background_css, unsafe_allow_html=True)
 # OpenRouteService API Key
 ORS_API_KEY = "5b3ce3597851110001cf6248e6cfd54b45cc4191bcde2aa3dc9e4a67"
 
-# Initialize Firebase
+# Initialize Firebase (✅ Corrected for Streamlit Cloud)
 if not firebase_admin._apps:
-    cred = credentials.Certificate(dict(st.secrets["firebase"]))  # Replace with your Firebase credentials JSON file
+    firebase_credentials = {
+        "type": st.secrets["firebase"]["type"],
+        "project_id": st.secrets["firebase"]["project_id"],
+        "private_key_id": st.secrets["firebase"]["private_key_id"],
+        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),
+        "client_email": st.secrets["firebase"]["client_email"],
+        "client_id": st.secrets["firebase"]["client_id"],
+        "auth_uri": st.secrets["firebase"]["auth_uri"],
+        "token_uri": st.secrets["firebase"]["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"],
+        "universe_domain": st.secrets["firebase"]["universe_domain"],
+    }
+    cred = credentials.Certificate(firebase_credentials)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
@@ -55,7 +68,7 @@ for idx, loc in enumerate(st.session_state.locations):
     folium.Marker(location=loc, popup=label, icon=folium.Icon(color="blue")).add_to(m)
 
 # Display the first map (Fixed height)
-map_data = st_folium(m, height=600, width="100%")  
+map_data = st_folium(m, height=600, width="100%")
 
 # Capture clicked points
 if map_data and map_data.get("last_clicked"):
@@ -108,7 +121,6 @@ def get_route(start, end, avoid_hazards=False):
 
             for hazard in hazards:
                 lat, lon = hazard[0], hazard[1]
-                
                 # Small square buffer around each hazard
                 buffer_size = 0.001  # ~500m
                 polygon = [[
@@ -118,7 +130,6 @@ def get_route(start, end, avoid_hazards=False):
                     [lon - buffer_size, lat + buffer_size],
                     [lon - buffer_size, lat - buffer_size]  # Close the polygon
                 ]]
-                
                 avoid_polygons["coordinates"].append(polygon)
             
             payload["options"] = {"avoid_polygons": avoid_polygons}
@@ -138,8 +149,6 @@ def get_route(start, end, avoid_hazards=False):
 if st.button("Get Route"):
     if len(st.session_state.locations) == 2:
         start, end = st.session_state.locations
-
-        # Fetch route based on selected type
         avoid_hazards = route_type == "Safest Route"
         route_coords, error_msg = get_route(start, end, avoid_hazards)
 
@@ -148,10 +157,10 @@ if st.button("Get Route"):
         else:
             st.error(error_msg)
 
-# Render updated map with route (Fixed zoom)
+# Render updated map with route
 route_map = folium.Map(
     location=st.session_state.locations[0] if st.session_state.locations else map_center,
-    zoom_start=5  # FIXED: Same zoom as the first map
+    zoom_start=5
 )
 
 # Add markers
@@ -180,5 +189,5 @@ for hazard in hazard_locations:
 if st.session_state.route_coords:
     folium.PolyLine(st.session_state.route_coords, color="blue", weight=5, opacity=0.7).add_to(route_map)
 
-# Display the final map (Fixed height)
-st_folium(route_map, height=600, width="100%")  # FIXED: Ensures consistent height
+# Display the final map
+st_folium(route_map, height=600, width="100%")
