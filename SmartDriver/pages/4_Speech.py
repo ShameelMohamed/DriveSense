@@ -16,58 +16,61 @@ st.set_page_config(
 # --- Background & Styling ---
 background_css = """
 <style>
+    /* Background settings */
     .stApp {
         background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
-    header { visibility: hidden; }
+    header {
+        visibility: hidden;
+    }
+
+    /* REMOVE padding & background around mic */
+    section.main > div:has(> div:has(> div[data-testid="stHorizontalBlock"])) > div {
+        background-color: rgba(0, 0, 0, 0) !important;
+        box-shadow: none !important;
+        padding: 0px !important;
+        margin: 0px auto !important;
+    }
+
+    div[data-testid="stHorizontalBlock"] > div:first-child {
+        background-color: transparent !important;
+        padding: 0px !important;
+        margin: 0px auto !important;
+    }
+
+    /* Style the mic button itself */
+    div[data-testid="stHorizontalBlock"] > div:first-child > div > button {
+        background: #ff4b4b !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 18px !important;
+        padding: 12px 30px !important;
+        border: 2px solid white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b !important;
+        animation: glow 2s infinite alternate !important;
+        transition: 0.3s ease;
+    }
+
+    div[data-testid="stHorizontalBlock"] > div:first-child > div > button:hover {
+        background-color: #ff7b7b !important;
+    }
+
+    /* Glow animation */
+    @keyframes glow {
+        from {
+            box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b;
+        }
+        to {
+            box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b;
+        }
+    }
 </style>
 """
 st.markdown(background_css, unsafe_allow_html=True)
-
-# --- Mic Button CSS (Fix dark background) ---
-mic_button_css = """
-<style>
-/* Mic container fix */
-div[data-testid="stHorizontalBlock"] > div:first-child > div {
-    background-color: transparent !important;
-    padding: 0 !important;
-    margin: 0 auto !important;
-    box-shadow: none !important;
-    display: flex;
-    justify-content: center;
-}
-/* Button styling */
-div[data-testid="stHorizontalBlock"] > div:first-child > div > button {
-    background: #ff4b4b !important;
-    color: white !important;
-    font-weight: bold !important;
-    font-size: 18px !important;
-    padding: 12px 28px !important;
-    border: 2px solid white !important;
-    border-radius: 12px !important;
-    box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b !important;
-    animation: glow 2s infinite alternate !important;
-    transition: 0.3s ease;
-}
-div[data-testid="stHorizontalBlock"] > div:first-child > div > button:hover {
-    background-color: #ff7b7b !important;
-}
-
-/* Mic button glow effect */
-@keyframes glow {
-    from {
-        box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b;
-    }
-    to {
-        box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b;
-    }
-}
-</style>
-"""
-st.markdown(mic_button_css, unsafe_allow_html=True)
 
 # --- API Configuration ---
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
