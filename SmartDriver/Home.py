@@ -12,7 +12,7 @@ st.sidebar.image("https://media-hosting.imagekit.io/963a894003644c1d/logo.jpg?Ex
 background_css = """
 <style>
 /* Import Google Font */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 /* Apply font globally */
 html, body, [class*="st-"] {
@@ -266,39 +266,110 @@ header {
   }
 }
 
-/* Update vehicle-like movement animation */
+/* Update vehicle movement animation for Welcome to */
 @keyframes vehicleMove {
   0% {
-    transform: translateX(-100%);
+    transform: translateX(-200%) scale(1);
+    opacity: 0;
+  }
+  5% {
+    transform: translateX(-150%) scale(1);
+    opacity: 1;
+  }
+  20% {
+    transform: translateX(-100%) scale(1.1);
+    opacity: 1;
   }
   40% {
-    transform: translateX(-10%);
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
   }
   50% {
-    transform: translateX(0%);    /* Single slowdown point */
+    transform: translateX(0%) scale(0.95);
+    opacity: 1;
   }
   60% {
-    transform: translateX(10%);
+    transform: translateX(50%) scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(100%) scale(1.1);
+    opacity: 1;
+  }
+  95% {
+    transform: translateX(300%) scale(1);
+    opacity: 0;
   }
   100% {
-    transform: translateX(200%);
+    transform: translateX(300%) scale(1);
+    opacity: 0;
   }
 }
 
-/* Update welcome-title to use the new animation */
+/* Enhanced animation for DriveSense */
+@keyframes driveSenseMove {
+  0% {
+    transform: translateX(-250%) scale(1);
+    opacity: 0;
+  }
+  5% {
+    transform: translateX(-200%) scale(1);
+    opacity: 1;
+  }
+  15% {
+    transform: translateX(-150%) scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: translateX(-100%) scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: translateX(-50%) scale(0.95);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(0%) scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: translateX(50%) scale(1.1);
+    opacity: 1;
+  }
+  75% {
+    transform: translateX(150%) scale(1.2);
+    opacity: 1;
+  }
+  95% {
+    transform: translateX(350%) scale(1);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(350%) scale(1);
+    opacity: 0;
+  }
+}
+
 .welcome-title {
   font-size: 3.5rem;
   color: #ffffff;
   position: relative;
   display: inline-block;
   font-weight: 800;
-  text-shadow: none;  /* Removed glow effect */
-  animation: vehicleMove 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 
+    0 0 5px rgba(255, 255, 255, 0.5),
+    0 0 10px rgba(255, 255, 255, 0.3),
+    0 0 15px rgba(128, 0, 255, 0.2);
+  animation: 
+    vehicleMove 10s cubic-bezier(0.4, 0, 0.2, 1) infinite,
+    glowPulse 2s ease-in-out infinite;
   white-space: nowrap;
   margin: 0;
+  transition: transform 0.3s ease;
 }
 
-/* Left side trails */
+/* Left side trails - only before text */
 .welcome-title::before {
   content: '';
   position: absolute;
@@ -314,53 +385,30 @@ header {
   transform: translateY(-50%);
   animation: speedTrail 0.5s linear infinite;
   filter: blur(1px);
-  box-shadow: none;  /* Removed glow effect */
+  box-shadow: none;
 }
 
-/* Right side trails */
+/* Remove right side trails */
 .welcome-title::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: -100%;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, 
-    transparent,
-    rgba(255, 255, 255, 0.8),
-    transparent
-  );
-  transform: translateY(-50%);
-  animation: speedTrail 0.5s linear infinite;
-  filter: blur(1px);
-  box-shadow: none;  /* Removed glow effect */
-}
-
-/* Additional left trails */
-.welcome-container::before {
-  content: '';
-  position: absolute;
-  top: 30%;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, 
-    transparent,
-    #ffffff 20%,
-    #ffffff 80%,
-    transparent
-  );
-  transform: translateY(-50%);
-  box-shadow: none;  /* Removed glow effect */
+  display: none;
 }
 
 /* Update the road line animation for opposite direction */
 @keyframes roadLine {
   0% {
-    background-position: 100px 0;  /* Start from right */
+    background-position: 100px 0;
+  }
+  40% {
+    background-position: 40px 0;
+  }
+  50% {
+    background-position: 0 0;  /* Stop point */
+  }
+  60% {
+    background-position: -40px 0;
   }
   100% {
-    background-position: 0 0;  /* Move to left */
+    background-position: -100px 0;
   }
 }
 
@@ -368,36 +416,42 @@ header {
 .welcome-container::after {
   content: '';
   position: absolute;
-  top: 30%;
+  top: 35%;  /* Moved down from 25% to 35% */
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
   background: repeating-linear-gradient(
     90deg,
-    transparent,
-    transparent 50px,
-    #ffffff 50px,
-    #ffffff 100px
+    #ffffff 0px,
+    #ffffff 40px,
+    transparent 40px,
+    transparent 80px
   );
   transform: translateY(-50%);
-  animation: roadLine 0.8s linear infinite;
-  box-shadow: none;  /* Removed glow effect */
+  animation: roadLine 0.4s linear infinite;  /* Restored previous speed from 0.2s to 0.4s */
+  box-shadow: none;
+  z-index: 1;
+}
+
+/* Remove the second line */
+.welcome-container::before {
+  display: none;
 }
 
 /* Remove animation from subtitle and text */
 .welcome-subtitle {
   color: #f0f0f0;
-  font-size: 1.8rem;
+  font-size: 2.2rem;  /* Increased from 1.8rem to 2.2rem */
   font-weight: 600;
-  text-shadow: none;  /* Removed glow effect */
+  text-shadow: none;
   margin-top: 1rem;
 }
 
 .welcome-text {
   color: #e0e0e0;
-  font-size: 1.3rem;
+  font-size: 1.6rem;  /* Increased from 1.3rem to 1.6rem */
   font-weight: 500;
-  text-shadow: none;  /* Removed glow effect */
+  text-shadow: none;
   margin-top: 0.5rem;
 }
 
@@ -407,10 +461,13 @@ header {
   text-align: center;
   margin-bottom: 3rem;
   overflow: hidden;
-  padding-bottom: 20px;
+  padding: 2rem;
   height: auto;
   width: 100%;
   margin-left: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
 }
 
 @keyframes fadeIn {
@@ -425,53 +482,93 @@ header {
 
 }
 
+/* Add a container for the road line */
+.road-line-container {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  margin: 1rem 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
 /* Add styles for the title container and split lines */
 .welcome-title-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;  /* Space between lines */
+  gap: 1.5rem;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  perspective: 1000px;
+  width: 100vw;  /* Ensure full width for complete exit */
+  margin-left: -50vw;  /* Center the container */
+  left: 50%;  /* Center the container */
+  position: relative;
 }
 
 .drive-sense {
-  margin-left: 5rem;
-  text-shadow: none;  /* Removed glow effect */
+  margin-left: 8rem;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 
+    0 0 5px rgba(255, 255, 255, 0.5),
+    0 0 10px rgba(255, 255, 255, 0.3),
+    0 0 15px rgba(128, 0, 255, 0.2);
+  margin-top: -0.5rem;
+  animation: 
+    driveSenseMove 10s cubic-bezier(0.4, 0, 0.2, 1) infinite,
+    glowPulse 2s ease-in-out infinite;
+  transition: transform 0.3s ease;
 }
 
-/* Update vehicle movement animation */
-@keyframes vehicleMove {
-  0% {
-    transform: translateX(-100%);
-  }
-  40% {
-    transform: translateX(-10%);
-  }
-  50% {
-    transform: translateX(0%);    /* Single slowdown point */
-  }
-  60% {
-    transform: translateX(10%);
-  }
-  100% {
-    transform: translateX(200%);
-  }
-}
-
-/* Remove glow pulse animation */
+/* Add a subtle glow animation */
 @keyframes glowPulse {
   0% {
-    text-shadow: none;
+    text-shadow: 
+      0 0 5px rgba(255, 255, 255, 0.5),
+      0 0 10px rgba(255, 255, 255, 0.3),
+      0 0 15px rgba(128, 0, 255, 0.2);
   }
   50% {
-    text-shadow: none;
+    text-shadow: 
+      0 0 8px rgba(255, 255, 255, 0.6),
+      0 0 12px rgba(255, 255, 255, 0.4),
+      0 0 18px rgba(128, 0, 255, 0.3);
   }
   100% {
-    text-shadow: none;
+    text-shadow: 
+      0 0 5px rgba(255, 255, 255, 0.5),
+      0 0 10px rgba(255, 255, 255, 0.3),
+      0 0 15px rgba(128, 0, 255, 0.2);
   }
 }
 
-.welcome-title {
-  animation: vehicleMove 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+/* Update subtitle and text to ensure visibility */
+.welcome-subtitle {
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 600;
+  text-shadow: none;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.welcome-text {
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 500;
+  text-shadow: none;
+  margin-top: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Add a subtle tilt effect */
+.welcome-title:hover, .drive-sense:hover {
+  transform: rotateX(5deg) rotateY(5deg);
 }
 </style>
 """
@@ -522,6 +619,14 @@ st.markdown("""
       <img src="https://ichef.bbci.co.uk/ace/standard/1024/cpsprodpb/14202/production/_108243428_gettyimages-871148930.jpg" alt="Speech">
       <div class="card-title">Speech</div>
       <div class="card-text">Get real-time road safety advice from our speech bot.</div>
+      <div class="card-button">Explore</div>
+    </div>
+  </a>
+  <a href="TODO" style="text-decoration:none;">
+    <div class="card" tabindex="0">
+      <img src="https://images.squarespace-cdn.com/content/v1/64236014406b577a88f99b3a/2b721232-76f6-42db-b083-a4417e32f70a/microsoft-to-do-feature.jpeg" alt="Speech">
+      <div class="card-title">AI To-Do</div>
+      <div class="card-text">Let AI plan your trip, so you can focus on what matters!</div>
       <div class="card-button">Explore</div>
     </div>
   </a>
