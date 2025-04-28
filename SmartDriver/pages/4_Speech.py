@@ -16,57 +16,46 @@ st.set_page_config(
 # --- Background & Styling ---
 background_css = """
 <style>
-    /* Background settings */
     .stApp {
         background-image: url('https://i.pinimg.com/originals/6d/46/f9/6d46f977733e6f9a9fa8f356e2b3e0fa.gif');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
-    header {
-        visibility: hidden;
+    header, footer {visibility: hidden;}
+
+    /* Remove padding around microphone button */
+    .element-container:has(.mic-container) {
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
-    /* REMOVE padding & background around mic */
-    section.main > div:has(> div:has(> div[data-testid="stHorizontalBlock"])) > div {
-        background-color: rgba(0, 0, 0, 0) !important;
-        box-shadow: none !important;
-        padding: 0px !important;
-        margin: 0px auto !important;
-    }
-
-    div[data-testid="stHorizontalBlock"] > div:first-child {
-        background-color: transparent !important;
-        padding: 0px !important;
-        margin: 0px auto !important;
-    }
-
-    /* Style the mic button itself */
-    div[data-testid="stHorizontalBlock"] > div:first-child > div > button {
-        background: #ff4b4b !important;
-        color: white !important;
-        font-weight: bold !important;
-        font-size: 18px !important;
-        padding: 12px 30px !important;
-        border: 2px solid white !important;
-        border-radius: 12px !important;
-        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b !important;
-        animation: glow 2s infinite alternate !important;
+    /* Mic button style */
+    .mic-container button {
+        width: 100% !important;
+        background: #ff4b4b;
+        color: white;
+        font-weight: bold;
+        font-size: 20px;
+        padding: 16px 32px;
+        border: 2px solid white;
+        border-radius: 16px;
+        box-shadow: 0 0 20px #ff4b4b, 0 0 40px #ff4b4b;
+        animation: glow 2s infinite alternate;
         transition: 0.3s ease;
     }
-
-    div[data-testid="stHorizontalBlock"] > div:first-child > div > button:hover {
+    .mic-container button:hover {
         background-color: #ff7b7b !important;
     }
+    /* Remove background behind mic container */
+    .mic-container > div {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
 
-    /* Glow animation */
     @keyframes glow {
-        from {
-            box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b;
-        }
-        to {
-            box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b;
-        }
+        from { box-shadow: 0 0 10px #ff4b4b, 0 0 20px #ff4b4b; }
+        to { box-shadow: 0 0 20px #ff7b7b, 0 0 40px #ff7b7b; }
     }
 </style>
 """
@@ -138,12 +127,17 @@ def text_to_speech_elevenlabs(text):
 
 st.subheader("🎙 Record your voice")
 
-# 🎤 Mic Recorder
+# 🎤 Mic Recorder (full-width)
+st.markdown('<div class="mic-container">', unsafe_allow_html=True)
+
 audio_data = mic_recorder(
     start_prompt="🎤 Start recording",
     stop_prompt="⏹ Stop recording",
-    key="recorder"
+    key="recorder",
+    use_container_width=True   # 👈 important
 )
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # --- After Recording ---
 if audio_data:
