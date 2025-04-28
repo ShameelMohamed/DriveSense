@@ -4,9 +4,11 @@ from firebase_admin import credentials, firestore
 import folium
 from streamlit_folium import st_folium
 import requests
+import json
 
 st.set_page_config(page_title="Route Planner", page_icon="🗺️", layout="wide", initial_sidebar_state="collapsed")
 
+# Background styling
 background_css = """
 <style>
     .stApp {
@@ -25,26 +27,46 @@ st.markdown(background_css, unsafe_allow_html=True)
 # OpenRouteService API Key
 ORS_API_KEY = "5b3ce3597851110001cf6248e6cfd54b45cc4191bcde2aa3dc9e4a67"
 
-# Initialize Firebase (✅ Corrected for Streamlit Cloud)
-if not firebase_admin._apps:
-    firebase_credentials = {
-        "type": st.secrets["firebase"]["type"],
-        "project_id": st.secrets["firebase"]["project_id"],
-        "private_key_id": st.secrets["firebase"]["private_key_id"],
-        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),
-        "client_email": st.secrets["firebase"]["client_email"],
-        "client_id": st.secrets["firebase"]["client_id"],
-        "auth_uri": st.secrets["firebase"]["auth_uri"],
-        "token_uri": st.secrets["firebase"]["token_uri"],
-        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
-        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"],
-        "universe_domain": st.secrets["firebase"]["universe_domain"],
-    }
-    cred = credentials.Certificate(firebase_credentials)
-    firebase_admin.initialize_app(cred)
+# Initialize Firebase with enhanced error handling
+def initialize_firebase():
+    if not firebase_admin._apps:
+        try:
+            # Debug: Show which secrets are available
+            if 'firebase' not in st.secrets:
+                st.error("Firebase secrets not found in Streamlit secrets!")
+                return False
+            
+            # Create credentials dictionary directly from secrets
+            firebase_config = {
+                "type": st.secrets.firebase.type,
+                "project_id": st.secrets.firebase.project_id,
+                "private_key_id": st.secrets.firebase.private_key_id,
+                "private_key": st.secrets.firebase.private_key.replace("\\n", "\n"),
+                "client_email": st.secrets.firebase.client_email,
+                "client_id": st.secrets.firebase.client_id,
+                "auth_uri": st.secrets.firebase.auth_uri,
+                "token_uri": st.secrets.firebase.token_uri,
+                "auth_provider_x509_cert_url": st.secrets.firebase.auth_provider_x509_cert_url,
+                "client_x509_cert_url": st.secrets.firebase.client_x509_cert_url,
+                "universe_domain": st.secrets.firebase.universe_domain
+            }
+            
+            # Initialize Firebase
+            cred = credentials.Certificate(firebase_config)
+            firebase_admin.initialize_app(cred)
+            return True
+        except Exception as e:
+            st.error(f"Firebase initialization failed: {str(e)}")
+            st.error("Please check your Firebase credentials in Streamlit Secrets")
+            return False
+    return True
+
+if not initialize_firebase():
+    st.stop()  # Stop the app if Firebase fails to initialize
 
 db = firestore.client()
 
+# App title
 st.title("🚗 SmartDriver - Route Planner with Hazard Warnings")
 
 # Initialize session state
@@ -57,6 +79,7 @@ if "route_coords" not in st.session_state:
 if st.button("Reset Markers"):
     st.session_state.locations = []
     st.session_state.route_coords = None
+    st.experimental_rerun()
 
 # Initialize map (Consistent Zoom)
 map_center = [20.5937, 78.9629]  # Default center: India
@@ -68,13 +91,14 @@ for idx, loc in enumerate(st.session_state.locations):
     folium.Marker(location=loc, popup=label, icon=folium.Icon(color="blue")).add_to(m)
 
 # Display the first map (Fixed height)
-map_data = st_folium(m, height=600, width="100%")
+map_data = st_folium(m, height=600, width="100%", key="main_map")
 
 # Capture clicked points
 if map_data and map_data.get("last_clicked"):
     lat, lng = map_data["last_clicked"]["lat"], map_data["last_clicked"]["lng"]
     if len(st.session_state.locations) < 2:
         st.session_state.locations.append((lat, lng))
+        st.experimental_rerun()
 
 # Display selected locations
 if len(st.session_state.locations) == 2:
@@ -88,15 +112,22 @@ route_type = st.radio("Select Route Type", ["Shortest Route", "Safest Route"])
 
 # Function to fetch hazard locations from Firebase
 def fetch_hazard_locations():
-    hazard_docs = db.collection("uploads").stream()
-    hazards = []
-    for doc in hazard_docs:
-        data = doc.to_dict()
-        if "gps_location" in data:
-            lat, lon = map(float, data["gps_location"].split(","))
-            img_url = data.get("image_url", "")
-            hazards.append((lat, lon, img_url))
-    return hazards
+    try:
+        hazard_docs = db.collection("uploads").stream()
+        hazards = []
+        for doc in hazard_docs:
+            data = doc.to_dict()
+            if "gps_location" in data:
+                try:
+                    lat, lon = map(float, data["gps_location"].split(","))
+                    img_url = data.get("image_url", "")
+                    hazards.append((lat, lon, img_url))
+                except Exception as e:
+                    st.warning(f"Couldn't parse location for hazard: {str(e)}")
+        return hazards
+    except Exception as e:
+        st.error(f"Error fetching hazards: {str(e)}")
+        return []
 
 # Function to fetch the route
 def get_route(start, end, avoid_hazards=False):
@@ -134,33 +165,41 @@ def get_route(start, end, avoid_hazards=False):
             
             payload["options"] = {"avoid_polygons": avoid_polygons}
 
-    response = requests.post(ors_url, headers=headers, json=payload)
-
-    if response.status_code == 200:
+    try:
+        response = requests.post(ors_url, headers=headers, json=payload)
+        response.raise_for_status()
+        
         response_json = response.json()
         if "features" in response_json and response_json["features"]:
             route_data = response_json["features"][0]["geometry"]["coordinates"]
             route_coords = [(lat, lng) for lng, lat in route_data]
             return route_coords, None
-
-    return None, f"Route not found. Error: {response.text}"
+        else:
+            return None, "No route features found in response"
+            
+    except Exception as e:
+        return None, f"Route API error: {str(e)}"
 
 # Button to calculate and show route
 if st.button("Get Route"):
     if len(st.session_state.locations) == 2:
         start, end = st.session_state.locations
         avoid_hazards = route_type == "Safest Route"
-        route_coords, error_msg = get_route(start, end, avoid_hazards)
+        
+        with st.spinner("Calculating route..."):
+            route_coords, error_msg = get_route(start, end, avoid_hazards)
 
         if route_coords:
             st.session_state.route_coords = route_coords
+            st.success("Route calculated successfully!")
         else:
             st.error(error_msg)
 
 # Render updated map with route
 route_map = folium.Map(
     location=st.session_state.locations[0] if st.session_state.locations else map_center,
-    zoom_start=5
+    zoom_start=5,
+    key="route_map"
 )
 
 # Add markers
@@ -187,7 +226,13 @@ for hazard in hazard_locations:
 
 # Add route if available
 if st.session_state.route_coords:
-    folium.PolyLine(st.session_state.route_coords, color="blue", weight=5, opacity=0.7).add_to(route_map)
+    folium.PolyLine(
+        st.session_state.route_coords, 
+        color="blue", 
+        weight=5, 
+        opacity=0.7,
+        tooltip="Calculated Route"
+    ).add_to(route_map)
 
 # Display the final map
-st_folium(route_map, height=600, width="100%")
+st_folium(route_map, height=600, width="100%", key="final_map")
