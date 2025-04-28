@@ -441,7 +441,7 @@ header {
 /* Update vehicle movement animation */
 @keyframes vehicleMove {
   0% {
-    transform: translateX(-100%);
+    transform: translateX(-200%);
   }
   40% {
     transform: translateX(-10%);
