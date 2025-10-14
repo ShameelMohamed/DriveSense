@@ -64,7 +64,7 @@ st.markdown(background_css, unsafe_allow_html=True)
 # --- API Configuration ---
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 gen_ai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = gen_ai.GenerativeModel('gemini-1.5-flash')
+model = gen_ai.GenerativeModel('gemini-2.5-flash')
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID_MALE = "pNInz6obpgDQGcFmaJgB"
@@ -169,3 +169,4 @@ if audio_data:
         st.warning("❌ No speech detected, please try again.")
 else:
     st.info("⬆ Click the mic button above to record!")
+
