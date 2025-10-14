@@ -23,7 +23,7 @@ st.markdown(background_css, unsafe_allow_html=True)
 
 # --- Setup ---
 gen_ai.configure(api_key="AIzaSyByJzlUoKiO1y1xytWczcnQvda9SAwYReo")
-model = gen_ai.GenerativeModel('gemini-1.5-flash')
+model = gen_ai.GenerativeModel('gemini-2.5-flash')
 
 
 
@@ -192,3 +192,4 @@ if st.session_state.todo_generated:
     """
 
     tips_container.markdown(tip_html, unsafe_allow_html=True)
+
