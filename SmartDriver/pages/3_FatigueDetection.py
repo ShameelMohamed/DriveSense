@@ -4,7 +4,11 @@ import dlib
 from scipy.spatial import distance
 import numpy as np
 import threading
-import pygame
+import os
+import urllib.request
+import bz2
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
+import av
 
 st.set_page_config(page_title="Fatigue Detection", page_icon="🚥", layout="wide", initial_sidebar_state="collapsed")
 
@@ -37,8 +41,21 @@ MOUTH_OPEN_CONSEC_FRAMES = 7
 HEAD_BEND_CONSEC_FRAMES = 10
 
 # Load dlib's face detector and facial landmark predictor
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+@st.cache_resource
+def load_dlib_models():
+    model_path = "shape_predictor_68_face_landmarks.dat"
+    if not os.path.exists(model_path):
+        url = "http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2"
+        st.info("Downloading face landmark model (this may take a moment)...")
+        urllib.request.urlretrieve(url, model_path + ".bz2")
+        with bz2.BZ2File(model_path + ".bz2") as fr, open(model_path, "wb") as fw:
+            fw.write(fr.read())
+        os.remove(model_path + ".bz2")
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor(model_path)
+    return detector, predictor
+
+detector, predictor = load_dlib_models()
 
 # Function to calculate eye aspect ratio (EAR)
 def eye_aspect_ratio(eye):
@@ -66,53 +83,28 @@ def head_bend_distance(landmarks):
     vertical_distance = nose_tip[1] - eyes_midpoint[1]
     return vertical_distance
 
-# Function to play sound
-def play_sound(sound_file, volume):
-    pygame.mixer.init()
-    pygame.mixer.music.set_volume(volume)
-    pygame.mixer.music.load(sound_file)
-    pygame.mixer.music.play()
-    while pygame.mixer.music.get_busy():
-        continue
-
 # Streamlit app
 st.title("🚗 Driving Fatigue Management")
 st.title("")
+
 # Sidebar elements
 with st.sidebar:
     st.header("Alert Settings")
+    eye_alert = st.checkbox("Detect Eyes Closure", value=True)
+    head_alert = st.checkbox("Detect Head Down", value=True)
+    yawn_alert = st.checkbox("Detect Yawning", value=True)
+    all_alert = st.checkbox("Detect All", value=True)
+    st.info("Ensure you grant camera permissions to use the fatigue detector.")
 
-    # Volume slider
-    volume = st.slider("Volume", 0.0, 1.0, 0.5)
+class VideoProcessor(VideoTransformerBase):
+    def __init__(self):
+        self.eye_counter = 0
+        self.mouth_open_counter = 0
+        self.head_bend_counter = 0
 
-    # Checkboxes
-    st.session_state.eye_alert = st.checkbox("Detect Eyes Closure", value=st.session_state.get("eye_alert", False))
-    st.session_state.head_alert = st.checkbox("Detect Head Down", value=st.session_state.get("head_alert", False))
-    st.session_state.yawn_alert = st.checkbox("Detect Yawning", value=st.session_state.get("yawn_alert", False))
-    st.session_state.all_alert = st.checkbox("Detect All", value=True)
-
-    # Radio button for sound option
-    sound_option = st.radio("Select Alert Sound", ["beep", "buzzer", "horn"])
-
-# Initialize session state
-if "running" not in st.session_state:
-    st.session_state.running = False
-
-def detect_fatigue():
-    cap = cv2.VideoCapture(0)
-    eye_counter = 0
-    mouth_open_counter = 0
-    head_bend_counter = 0
-    frame_window = st.empty()
-
-    while st.session_state.running:
-        ret, frame = cap.read()
-        if not ret:
-            st.error("Failed to capture video.")
-            break
-
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = detector(gray)
 
         for face in faces:
@@ -130,49 +122,46 @@ def detect_fatigue():
             alert_text = ""
 
             # Detect Eyes Closure
-            if (st.session_state.eye_alert or st.session_state.all_alert) and avg_ear < EYE_AR_THRESHOLD:
-                eye_counter += 1
-                if eye_counter >= EYE_AR_CONSEC_FRAMES:
-                    threading.Thread(target=play_sound, args=(f"{sound_option}.wav", volume), daemon=True).start()
+            if (eye_alert or all_alert) and avg_ear < EYE_AR_THRESHOLD:
+                self.eye_counter += 1
+                if self.eye_counter >= EYE_AR_CONSEC_FRAMES:
                     alert_text = "Eyes Closed!"
                     color = (0, 0, 255)
-                    eye_counter = 0
             else:
-                eye_counter = 0
+                self.eye_counter = 0
 
             # Detect Yawning
-            if (st.session_state.yawn_alert or st.session_state.all_alert) and mar > YAWN_AR_THRESHOLD:
-                mouth_open_counter += 1
-                if mouth_open_counter >= MOUTH_OPEN_CONSEC_FRAMES:
-                    threading.Thread(target=play_sound, args=(f"{sound_option}.wav", volume), daemon=True).start()
+            if (yawn_alert or all_alert) and mar > YAWN_AR_THRESHOLD:
+                self.mouth_open_counter += 1
+                if self.mouth_open_counter >= MOUTH_OPEN_CONSEC_FRAMES:
                     alert_text = "Yawning Detected!"
                     color = (0, 0, 255)
-                    mouth_open_counter = 0
             else:
-                mouth_open_counter = 0
+                self.mouth_open_counter = 0
 
             # Detect Head Down
-            if (st.session_state.head_alert or st.session_state.all_alert) and vertical_distance > HEAD_BEND_THRESHOLD:
-                head_bend_counter += 1
-                if head_bend_counter >= HEAD_BEND_CONSEC_FRAMES:
-                    threading.Thread(target=play_sound, args=(f"{sound_option}.wav", volume), daemon=True).start()
+            if (head_alert or all_alert) and vertical_distance > HEAD_BEND_THRESHOLD:
+                self.head_bend_counter += 1
+                if self.head_bend_counter >= HEAD_BEND_CONSEC_FRAMES:
                     alert_text = "Head Down!"
                     color = (0, 0, 255)
-                    head_bend_counter = 0
             else:
-                head_bend_counter = 0
+                self.head_bend_counter = 0
 
-            cv2.rectangle(frame, (face.left(), face.top()), (face.right(), face.bottom()), color, 2)
-            cv2.putText(frame, alert_text, (face.left(), face.top() - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            cv2.rectangle(img, (face.left(), face.top()), (face.right(), face.bottom()), color, 2)
+            if alert_text:
+                cv2.putText(img, alert_text, (face.left(), face.top() - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
 
-        frame_window.image(frame, channels="BGR", use_column_width=True)
-    cap.release()
-    st.write("Fatigue detection stopped.")
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-# Start/Stop button
-if st.button("Start / Stop"):
-    if not st.session_state.running:
-        st.session_state.running = True
-        detect_fatigue()
-    else:
-        st.session_state.running = False
+rtc_configuration = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+)
+
+webrtc_streamer(
+    key="fatigue-detection",
+    video_processor_factory=VideoProcessor,
+    rtc_configuration=rtc_configuration,
+    media_stream_constraints={"video": True, "audio": False},
+)
+

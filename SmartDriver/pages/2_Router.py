@@ -31,8 +31,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- Constants ---
-ORS_API_KEY = st.secrets["ORS_API_KEY"]  # API Key stored safely in Streamlit Secrets
-FIREBASE_CREDENTIALS = st.secrets["firebase"]  # Loaded from Streamlit Secrets
+try:
+    ORS_API_KEY = st.secrets["ORS_API_KEY"]  # API Key stored safely in Streamlit Secrets
+    FIREBASE_CREDENTIALS = st.secrets["firebase"]  # Loaded from Streamlit Secrets
+except Exception:
+    ORS_API_KEY = ""
+    FIREBASE_CREDENTIALS = "{}"
 
 # --- Initialize Firebase ---
 if not firebase_admin._apps:

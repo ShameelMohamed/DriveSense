@@ -10,7 +10,7 @@ import cloudinary.uploader
 import torch
 import numpy as np
 from PIL import Image
-from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
+from transformers import AutoImageProcessor, SegformerForSemanticSegmentation
 
 # Set Page Config
 st.set_page_config(page_title="Road Hazard", page_icon="🚧", layout="wide", initial_sidebar_state="collapsed")
@@ -49,7 +49,7 @@ cloudinary.config(
 @st.cache_resource
 def load_segformer():
     model_name = "nvidia/segformer-b2-finetuned-cityscapes-1024-1024"
-    feature_extractor = SegformerFeatureExtractor.from_pretrained(model_name)
+    feature_extractor = AutoImageProcessor.from_pretrained(model_name)
     model = SegformerForSemanticSegmentation.from_pretrained(model_name)
     return feature_extractor, model
 
