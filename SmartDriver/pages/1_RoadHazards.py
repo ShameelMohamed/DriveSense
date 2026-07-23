@@ -7,11 +7,8 @@ from datetime import datetime
 import requests
 import cloudinary
 import cloudinary.uploader
-import torch
 import numpy as np
 from PIL import Image
-from transformers import AutoImageProcessor, SegformerForSemanticSegmentation
-
 # Set Page Config
 st.set_page_config(page_title="Road Hazard", page_icon="🚧", layout="wide", initial_sidebar_state="collapsed")
 
@@ -45,25 +42,11 @@ cloudinary.config(
     api_secret="NdjntP2ahsNwzF39YH734dI8msM",
 )
 
-# Load SegFormer Model
-@st.cache_resource
-def load_segformer():
-    model_name = "nvidia/segformer-b2-finetuned-cityscapes-1024-1024"
-    feature_extractor = AutoImageProcessor.from_pretrained(model_name)
-    model = SegformerForSemanticSegmentation.from_pretrained(model_name)
-    return feature_extractor, model
-
-feature_extractor, model = load_segformer()
-
 # Function to check if the image contains a road
 def is_road_present(image):
-    inputs = feature_extractor(images=image, return_tensors="pt")
-    with torch.no_grad():
-        outputs = model(**inputs)
-    segmentation_map = outputs.logits.argmax(dim=1).squeeze().cpu().numpy()
-    road_pixel_count = np.sum(segmentation_map == 0)
-    road_percentage = (road_pixel_count / segmentation_map.size) * 100
-    return road_percentage > 10
+    # Simplest logic: Bypass heavy AI check to ensure deployment works on Streamlit Cloud
+    # You can add a lightweight OpenCV color heuristic here later if needed
+    return True
 
 # Initialize Session State for Selected Location
 if "selected_location" not in st.session_state:

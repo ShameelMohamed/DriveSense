@@ -1,14 +1,10 @@
---extra-index-url https://download.pytorch.org/whl/cpu
 streamlit
 firebase-admin
 folium
 streamlit-folium
 requests
-torch
-torchvision
 numpy
 Pillow
-transformers
 cloudinary
 google.generativeai
 streamlit-webrtc==0.46.0
